@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS citas (
     medico_codigo VARCHAR(20) NOT NULL,
     fecha DATE NOT NULL,
     estado VARCHAR(20) NOT NULL,
+    motivo_cancelacion VARCHAR(200) NULL,
     CONSTRAINT fk_citas_paciente FOREIGN KEY (paciente_codigo) REFERENCES pacientes (codigo),
     CONSTRAINT fk_citas_medico FOREIGN KEY (medico_codigo) REFERENCES medicos (codigo)
 );

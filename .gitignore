@@ -1,0 +1,11 @@
+out/
+bin/
+target/
+*.class
+*.ser
+pacientes.txt
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db

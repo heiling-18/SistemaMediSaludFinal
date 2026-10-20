@@ -22,14 +22,15 @@ public class Principal {
         CitaDAO citaDAO = new CitaDAO(pacienteDAO, medicoDAO);
         GestorClinica.inicializar(pacienteDAO, medicoDAO, citaDAO);
 
-        ServicioPacientes servicioPacientes = new ServicioPacientes(pacienteDAO);
-        ServicioMedicos servicioMedicos = new ServicioMedicos(medicoDAO);
-        ServicioCitas servicioCitas = new ServicioCitas(citaDAO);
-        ServicioFacturacion servicioFacturacion = new ServicioFacturacion();
-
         HiloNotificaciones hiloNotificaciones = new HiloNotificaciones();
         hiloNotificaciones.start();
         ObservadorCitaNotificacion observador = new ObservadorCitaNotificacion(hiloNotificaciones);
+
+        ServicioPacientes servicioPacientes = new ServicioPacientes(pacienteDAO);
+        ServicioMedicos servicioMedicos = new ServicioMedicos(medicoDAO);
+        ServicioCitas servicioCitas = new ServicioCitas(citaDAO, observador);
+        ServicioFacturacion servicioFacturacion = new ServicioFacturacion();
+
         FachadaAgendamiento fachadaAgendamiento = new FachadaAgendamiento(
                 servicioPacientes, servicioMedicos, servicioCitas, observador);
 

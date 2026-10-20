@@ -16,12 +16,8 @@ public class ServicioPacientes {
     }
 
     public void registrarPaciente(Paciente paciente) {
-        String codigo = paciente.getCodigo();
-        if (!codigo.matches("\\d+")) {
-            throw new IllegalArgumentException("El documento/codigo del paciente no puede contener letras ni simbolos (solo numeros)");
-        }
-        if (repositorioPacientes.buscarPorCodigo(codigo) != null) {
-            throw new IllegalArgumentException("Ya existe un paciente registrado con el documento/codigo " + codigo);
+        if (repositorioPacientes.buscarPorCodigo(paciente.getCodigo()) != null) {
+            throw new IllegalArgumentException("Ya existe un paciente con el codigo " + paciente.getCodigo());
         }
         repositorioPacientes.guardar(paciente);
     }

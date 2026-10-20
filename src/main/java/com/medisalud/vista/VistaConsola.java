@@ -9,6 +9,7 @@ import com.medisalud.entity.FacturaConRecargoNocturno;
 import com.medisalud.entity.HistoriaClinica;
 import com.medisalud.entity.Medico;
 import com.medisalud.entity.Paciente;
+import com.medisalud.exception.CancelacionTardiaException;
 import com.medisalud.exception.CitaNoEncontradaException;
 import com.medisalud.exception.MedicoNoEncontradoException;
 import com.medisalud.exception.PacienteNoEncontradoException;
@@ -42,7 +43,8 @@ public class VistaConsola {
             System.out.println("4. Consultar historia clinica");
             System.out.println("5. Facturar consulta");
             System.out.println("6. Generar reporte");
-            System.out.println("7. Salir");
+            System.out.println("7. Cancelar cita");
+            System.out.println("8. Salir");
             System.out.print("Elegir una opcion: ");
             String opcion = lector.nextLine();
 
@@ -66,6 +68,9 @@ public class VistaConsola {
                     generarReporte();
                     break;
                 case "7":
+                    cancelarCita();
+                    break;
+                case "8":
                     continuar = false;
                     break;
                 default:
@@ -77,14 +82,20 @@ public class VistaConsola {
 
     private void registrarPaciente() {
         try {
-            String nombreCompleto = leerSoloLetras("Nombre completo: ");
-            String codigo = leerSoloNumeros("Documento / Codigo (solo numeros): ");
-            int edad = leerEdad("Edad (0-120): ");
+            System.out.print("Nombre completo: ");
+            String nombreCompleto = lector.nextLine();
+            System.out.print("Codigo: ");
+            String codigo = lector.nextLine();
+            System.out.print("Edad: ");
+            int edad = Integer.parseInt(lector.nextLine());
 
+            System.out.print("Desea registrar antecedentes y alergias? (s/n): ");
             Paciente paciente;
-            if (leerSiNo("Desea registrar antecedentes y alergias? (s/n): ")) {
-                String antecedentes = leerNoVacio("Antecedentes: ");
-                String alergias = leerNoVacio("Alergias: ");
+            if (lector.nextLine().equalsIgnoreCase("s")) {
+                System.out.print("Antecedentes: ");
+                String antecedentes = lector.nextLine();
+                System.out.print("Alergias: ");
+                String alergias = lector.nextLine();
                 HistoriaClinica historia = new ConstructorHistoriaClinica()
                         .conAntecedentes(antecedentes)
                         .conAlergias(alergias)
@@ -103,9 +114,12 @@ public class VistaConsola {
 
     private void registrarMedico() {
         try {
-            String nombreCompleto = leerSoloLetras("Nombre completo: ");
-            String codigo = leerSoloNumeros("Documento / Codigo (solo numeros): ");
-            String especialidad = leerSoloLetras("Especialidad: ");
+            System.out.print("Nombre completo: ");
+            String nombreCompleto = lector.nextLine();
+            System.out.print("Codigo: ");
+            String codigo = lector.nextLine();
+            System.out.print("Especialidad: ");
+            String especialidad = lector.nextLine();
 
             Medico medico = new Medico(nombreCompleto, codigo, especialidad);
             controlador.registrarMedico(medico);
@@ -117,18 +131,25 @@ public class VistaConsola {
 
     private void agendarCita() {
         try {
-            String codigoCita = leerNoVacio("Codigo de la cita: ");
-            String codigoPaciente = leerNoVacio("Documento / Codigo del paciente: ");
-            String codigoMedico = leerNoVacio("Documento / Codigo del medico: ");
-            LocalDate fecha = leerFecha("Fecha (aaaa-mm-dd): ");
+            System.out.print("Codigo de la cita: ");
+            String codigoCita = lector.nextLine();
+            System.out.print("Codigo del paciente: ");
+            String codigoPaciente = lector.nextLine();
+            System.out.print("Codigo del medico: ");
+            String codigoMedico = lector.nextLine();
+            System.out.print("Fecha (aaaa-mm-dd): ");
+            LocalDate fecha = LocalDate.parse(lector.nextLine());
 
             Cita cita = controlador.agendarCita(codigoCita, codigoPaciente, codigoMedico, fecha);
             System.out.println("Cita agendada: " + cita);
 
-            if (leerSiNo("Confirmar la cita ahora? (s/n): ")) {
+            System.out.print("Confirmar la cita ahora? (s/n): ");
+            if (lector.nextLine().equalsIgnoreCase("s")) {
                 controlador.confirmarCita(codigoCita);
-                if (leerSiNo("Registrar atencion con diagnostico? (s/n): ")) {
-                    String diagnostico = leerNoVacio("Diagnostico: ");
+                System.out.print("Registrar atencion con diagnostico? (s/n): ");
+                if (lector.nextLine().equalsIgnoreCase("s")) {
+                    System.out.print("Diagnostico: ");
+                    String diagnostico = lector.nextLine();
                     controlador.atenderCita(codigoCita, diagnostico);
                 }
                 System.out.println("Estado actualizado: " + controlador.buscarCita(codigoCita).getEstado());
@@ -140,9 +161,25 @@ public class VistaConsola {
         }
     }
 
+    private void cancelarCita() {
+        try {
+            System.out.print("Codigo de la cita a cancelar: ");
+            String codigoCita = lector.nextLine();
+            System.out.print("Motivo de la cancelacion: ");
+            String motivo = lector.nextLine();
+
+            Cita citaCancelada = controlador.cancelarCita(codigoCita, motivo);
+            System.out.println("Cita cancelada: " + citaCancelada);
+        } catch (CitaNoEncontradaException | TransicionInvalidaException
+                | CancelacionTardiaException | IllegalArgumentException excepcion) {
+            System.out.println("No se pudo cancelar la cita: " + excepcion.getMessage());
+        }
+    }
+
     private void consultarHistoriaClinica() {
         try {
-            String codigoPaciente = leerNoVacio("Documento / Codigo del paciente: ");
+            System.out.print("Codigo del paciente: ");
+            String codigoPaciente = lector.nextLine();
             HistoriaClinica historia = controlador.consultarHistoriaClinica(codigoPaciente);
             System.out.println(historia);
             if (historia.getConsultas().isEmpty()) {
@@ -158,18 +195,22 @@ public class VistaConsola {
 
     private void facturarConsulta() {
         try {
-            String codigoCita = leerNoVacio("Codigo de la cita: ");
-            String tipo = leerTipoConsulta("Tipo de consulta (G=general, E=especialista): ");
+            System.out.print("Codigo de la cita: ");
+            String codigoCita = lector.nextLine();
+            System.out.print("Tipo de consulta (G=general, E=especialista): ");
+            String tipo = lector.nextLine();
             EstrategiaCosto estrategiaCosto = tipo.equalsIgnoreCase("E")
                     ? new EstrategiaCostoConsultaEspecialista()
                     : new EstrategiaCostoConsultaGeneral();
 
             Factura factura = controlador.facturarCita(codigoCita, estrategiaCosto);
 
-            if (leerSiNo("Es paciente afiliado? (s/n): ")) {
+            System.out.print("Es paciente afiliado? (s/n): ");
+            if (lector.nextLine().equalsIgnoreCase("s")) {
                 factura = new FacturaConDescuentoAfiliado(factura);
             }
-            if (leerSiNo("Es horario nocturno? (s/n): ")) {
+            System.out.print("Es horario nocturno? (s/n): ");
+            if (lector.nextLine().equalsIgnoreCase("s")) {
                 factura = new FacturaConRecargoNocturno(factura);
             }
 
@@ -181,18 +222,20 @@ public class VistaConsola {
 
     private void generarReporte() {
         try {
-            String codigoMedico = leerNoVacio("Codigo del medico para ver sus citas: ");
+            System.out.print("Codigo del medico para ver sus citas: ");
+            String codigoMedico = lector.nextLine();
             List<Cita> citas = controlador.generarReportePorMedico(codigoMedico);
             imprimirTitulo("Citas del medico " + codigoMedico + " (" + citas.size() + ")");
             if (citas.isEmpty()) {
                 System.out.println("  Sin citas registradas.");
             } else {
-                String formato = "  %-6s | %-24s | %-10s | %-10s%n";
-                System.out.printf(formato, "Cita", "Paciente", "Fecha", "Estado");
-                System.out.println("  " + "-".repeat(7) + "+" + "-".repeat(26) + "+" + "-".repeat(12) + "+" + "-".repeat(11));
+                String formato = "  %-6s | %-24s | %-10s | %-10s | %-30s%n";
+                System.out.printf(formato, "Cita", "Paciente", "Fecha", "Estado", "Motivo");
+                System.out.println("  " + "-".repeat(7) + "+" + "-".repeat(26) + "+"
+                        + "-".repeat(12) + "+" + "-".repeat(12) + "+" + "-".repeat(31));
                 for (Cita cita : citas) {
                     System.out.printf(formato, cita.getCodigo(), cita.getPaciente().getNombreCompleto(),
-                            cita.getFecha(), cita.getEstado());
+                            cita.getFecha(), cita.getEstado(), cita.obtenerTextoMotivo());
                 }
             }
 
@@ -209,7 +252,8 @@ public class VistaConsola {
                 System.out.printf("  %-10s | $%,12.2f%n", "TOTAL", granTotal);
             }
 
-            int edadMinima = leerEdad("Edad minima para el reporte de pacientes: ");
+            System.out.print("Edad minima para el reporte de pacientes: ");
+            int edadMinima = Integer.parseInt(lector.nextLine());
             List<Paciente> mayores = controlador.listarPacientesMayoresDeEdad(edadMinima);
             imprimirTitulo("Pacientes de " + edadMinima + " anios o mas (" + mayores.size() + ")");
             if (mayores.isEmpty()) {
@@ -222,106 +266,22 @@ public class VistaConsola {
                     System.out.printf(formato, paciente.getCodigo(), paciente.getNombreCompleto(), paciente.getEdad());
                 }
             }
+
+            Map<String, Long> cancelacionesPorMedico = controlador.generarReporteCancelacionesPorMedico();
+            imprimirTitulo("Cancelaciones por medico");
+            if (cancelacionesPorMedico.isEmpty()) {
+                System.out.println("  Sin citas canceladas.");
+            } else {
+                String formatoCancelaciones = "  %-10s | %10s%n";
+                System.out.printf(formatoCancelaciones, "Medico", "Canceladas");
+                System.out.println("  " + "-".repeat(11) + "+" + "-".repeat(11));
+                for (Map.Entry<String, Long> fila : cancelacionesPorMedico.entrySet()) {
+                    System.out.printf("  %-10s | %10d%n", fila.getKey(), fila.getValue());
+                }
+            }
             System.out.println();
         } catch (NumberFormatException excepcion) {
             System.out.println("Edad invalida: " + excepcion.getMessage());
-        }
-    }
-
-    private String leerSoloLetras(String etiqueta) {
-        while (true) {
-            System.out.print(etiqueta);
-            String entrada = lector.nextLine().trim();
-            if (entrada.isEmpty()) {
-                System.out.println("  [!] Este campo no puede estar vacio.");
-                continue;
-            }
-            if (!entrada.matches("[\\p{L} .'-]+")) {
-                System.out.println("  [!] Solo se permiten letras y espacios (no ingrese numeros ni simbolos).");
-                continue;
-            }
-            return entrada;
-        }
-    }
-
-    private String leerSoloNumeros(String etiqueta) {
-        while (true) {
-            System.out.print(etiqueta);
-            String entrada = lector.nextLine().trim();
-            if (entrada.isEmpty()) {
-                System.out.println("  [!] El documento/codigo no puede estar vacio.");
-                continue;
-            }
-            if (!entrada.matches("\\d+")) {
-                System.out.println("  [!] El documento/codigo solo puede contener numeros (no se permiten letras).");
-                continue;
-            }
-            return entrada;
-        }
-    }
-
-    private int leerEdad(String etiqueta) {
-        while (true) {
-            System.out.print(etiqueta);
-            String entrada = lector.nextLine().trim();
-            try {
-                int edad = Integer.parseInt(entrada);
-                if (edad < 0 || edad > 120) {
-                    System.out.println("  [!] La edad debe estar entre 0 y 120 anios.");
-                    continue;
-                }
-                return edad;
-            } catch (NumberFormatException e) {
-                System.out.println("  [!] Debe ingresar un numero entero valido (no se permiten letras).");
-            }
-        }
-    }
-
-    private boolean leerSiNo(String etiqueta) {
-        while (true) {
-            System.out.print(etiqueta);
-            String entrada = lector.nextLine().trim();
-            if (entrada.equalsIgnoreCase("s")) {
-                return true;
-            }
-            if (entrada.equalsIgnoreCase("n")) {
-                return false;
-            }
-            System.out.println("  [!] Opcion invalida. Escriba 's' para si o 'n' para no.");
-        }
-    }
-
-    private String leerTipoConsulta(String etiqueta) {
-        while (true) {
-            System.out.print(etiqueta);
-            String entrada = lector.nextLine().trim();
-            if (entrada.equalsIgnoreCase("G") || entrada.equalsIgnoreCase("E")) {
-                return entrada.toUpperCase();
-            }
-            System.out.println("  [!] Opcion invalida. Escriba 'G' (general) o 'E' (especialista).");
-        }
-    }
-
-    private LocalDate leerFecha(String etiqueta) {
-        while (true) {
-            System.out.print(etiqueta);
-            String entrada = lector.nextLine().trim();
-            try {
-                return LocalDate.parse(entrada);
-            } catch (DateTimeParseException e) {
-                System.out.println("  [!] Formato de fecha invalido. Use el formato aaaa-mm-dd (ejemplo: 2026-10-25).");
-            }
-        }
-    }
-
-    private String leerNoVacio(String etiqueta) {
-        while (true) {
-            System.out.print(etiqueta);
-            String entrada = lector.nextLine().trim();
-            if (!entrada.isEmpty()) {
-                return entrada;
-            }
-            System.out.println("  [!] Este campo no puede estar vacio.");
         }
     }
 
